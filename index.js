@@ -114,6 +114,7 @@ function startListening(httpServer) {
                 res.headers[name] = undefined
             }
 
+            console.info(req.method, req.url)
             app.handle(req, res)
 
         })

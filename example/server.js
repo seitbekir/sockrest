@@ -3,7 +3,7 @@ const sockrest = require('../index.js')
 const app = sockrest.listen(3000)
 
 app.on('connection', client => {
-    console.debug('User connected')
+    console.info('User connected')
 })
 
 app.use((req, res, next) => {
