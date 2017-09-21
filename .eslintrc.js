@@ -1,11 +1,11 @@
 module.exports = {
     "extends": [
         "eslint-config-google",
+        "eslint:recommended",
     ],
     "env": {
         "node": true
     },
-    "extends": "eslint:recommended",
     "rules": {
         "indent": [
             "error",

@@ -72,7 +72,7 @@ client.on('open', () => {
         // 4xx
         .catch(err => {
             console.error('Response was not get')
-            console.error('Status Code:', err.statusCode);
+            console.error('Status Code:', err.statusCode)
         })
 
     client
@@ -86,7 +86,7 @@ client.on('open', () => {
         // 4xx
         .catch(err => {
             console.error('Response was not get')
-            console.error('Status Code:', err.statusCode);
+            console.error('Status Code:', err.statusCode)
         })
 })
 ```

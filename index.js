@@ -1,6 +1,7 @@
 const _ = require('lodash')
 
-const router = require('express').Router
+const colors = require('colors/safe')
+const router = require('./router/index')
 const engine = require('engine.io')
 
 /* Definition */
@@ -21,7 +22,11 @@ function attach(httpServer) {
 
 /* Private */
 const supportedRequestTypes = [
-    'FIRE',
+    'NOTIFY',
+
+    'SUBSCRIBE',
+    'UNSUBSCRIBE',
+
     'GET',
     'POST',
     'PUT',
@@ -78,45 +83,54 @@ function startListening(httpServer) {
             }
 
             let req = _.clone(abstractReq)
-            let res = _.clone(abstractRes)
-
+            let res = {}
+            
             req.requestId = RequestId(data[0])
-            res.requestId = RequestId(data[0])
-
+            
             req.method = String(data[1]).toUpperCase()
             req.url = res.path = data[2]
             req.headers = data[3]
             req.body = data[4]
             req.params = []
+            
+            if (requestType !== supportedRequestTypes[0]) {
+                res = _.clone(abstractRes)
 
-            res.headers = {}
-            res.send = res.end = function send() {
-                let statusCode = res.statusCode
-                let body = arguments[0]
-                if (arguments.length === 2) {
-                    statusCode = arguments[0]
-                    body = arguments[1]
+                res.requestId = RequestId(data[0])
+
+                res.headers = {}
+                res.send = res.end = function send() {
+                    let statusCode = res.statusCode
+                    let body = arguments[0]
+                    if (arguments.length === 2) {
+                        statusCode = arguments[0]
+                        body = arguments[1]
+                    }
+
+                    let data = []
+
+                    data[0] = res.requestId
+                    data[1] = statusCode
+                    data[2] = res.headers
+                    data[3] = body
+
+                    connection.send(JSON.stringify(data))
                 }
-
-                let data = []
-
-                data[0] = res.requestId
-                data[1] = statusCode
-                data[2] = res.headers
-                data[3] = body
-
-                connection.send(JSON.stringify(data))
+                res.setHeader = function(name, value) {
+                    res.headers[name] = value
+                }
+                res.unsetHeader = function(name) {
+                    res.headers[name] = undefined
+                }
             }
-            res.setHeader = function(name, value) {
-                res.headers[name] = value
-            }
-            res.unsetHeader = function(name) {
-                res.headers[name] = undefined
+            if (requestType === supportedRequestTypes[0]) {
+                res.send = res.end = function() {
+                    console.warn('Response sednding not supported for NOTIFY')
+                }
             }
 
-            console.info(req.method, req.url)
+            console.info(colors.green(req.method + ':'), req.url)
             app.handle(req, res)
-
         })
     })
 

@@ -2,9 +2,12 @@ const sockrest = require('../index.js')
 
 const app = sockrest.listen(3000)
 
-app.on('connection', client => {
-    console.info('User connected')
-})
+// app.user('connection', connection => {
+//     console.info('User connected')
+// })
+// app.user('disconnect', connection => {
+//     console.info('User disconnected')
+// })
 
 app.use((req, res, next) => {
     console.info('first middleware', req.body)
@@ -21,6 +24,9 @@ app.post('/posts', (req, res, next) => {
     console.info(`POST: ${req.url}`)
 
     res.send(201, { message: 'Awsome', object: req.body })
+})
+app.notify('/yes', (req, res, next) => {
+    console.info(req.body)
 })
 // middleware that hendle errors
 app.use((err, req, res, next) => {

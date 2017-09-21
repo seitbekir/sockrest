@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/seitbekir/sockrest#readme",
   "dependencies": {
+    "colors": "^1.1.2",
     "connect": "^3.6.2",
     "engine.io": "^3.1.0",
     "express": "^4.15.3"
