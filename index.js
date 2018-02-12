@@ -84,15 +84,15 @@ function startListening(httpServer) {
 
             let req = _.clone(abstractReq)
             let res = {}
-            
+
             req.requestId = RequestId(data[0])
-            
+
             req.method = String(data[1]).toUpperCase()
             req.url = res.path = data[2]
             req.headers = data[3]
             req.body = data[4]
             req.params = []
-            
+
             if (requestType !== supportedRequestTypes[0]) {
                 res = _.clone(abstractRes)
 
