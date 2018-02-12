@@ -125,7 +125,7 @@ function startListening(httpServer) {
             }
             if (requestType === supportedRequestTypes[0]) {
                 res.send = res.end = function() {
-                    console.warn('Response sednding not supported for NOTIFY')
+                    console.warn('Response sending not supported for NOTIFY')
                 }
             }
 
