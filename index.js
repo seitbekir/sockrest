@@ -48,7 +48,7 @@ function startListening(httpServer) {
             connection,
             app,
         }
-        let abstractRes = {
+        const abstractRes = {
             statusCode: 200,
             headers: {},
         }
@@ -84,10 +84,8 @@ function startListening(httpServer) {
             req.body = data[4]
             req.params = []
 
-            let res = {}
-            res = _.clone(abstractRes)
+            let res = _.clone(abstractRes)
             res.requestId = RequestId(data[0])
-            res.headers = {}
             res.send = res.end = function send() {
                 let statusCode = res.statusCode
                 let body = arguments[0]
@@ -119,7 +117,7 @@ function startListening(httpServer) {
             console.info(colors.green(req.method + ':'), req.url)
 
             if (supportedRequestTypes.indexOf(requestType) === -1) {
-                res.statusCode = 400;
+                res.statusCode = 501;
                 res.send();
             } else {
                 app.handle(req, res);
