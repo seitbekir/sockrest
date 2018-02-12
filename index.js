@@ -48,9 +48,9 @@ function startListening(httpServer) {
             connection,
             app,
         }
-        let abstractRes = {
+        const abstractRes = {
             statusCode: 200,
-            headers: [],
+            headers: {},
         }
 
         /**
@@ -60,7 +60,7 @@ function startListening(httpServer) {
          * data[2] is request path. Ex.: /us/url
          * data[3] is object of headers { content-type: 'XML', content-length: 500 }
          * data[4] is body, can contain any data client sends
-         * 
+         *
          * Response struct:
          * data[0] is request unique ID
          * data[1] is response HTTP code
@@ -75,62 +75,53 @@ function startListening(httpServer) {
                 return
             }
             let requestType = String(data[1]).toUpperCase()
-            let isSupportedRequestType = supportedRequestTypes.indexOf(requestType) !== -1
-
-            if (!isSupportedRequestType) {
-                // ignore for now
-                return
-            }
 
             let req = _.clone(abstractReq)
-            let res = {}
-            
             req.requestId = RequestId(data[0])
-            
             req.method = String(data[1]).toUpperCase()
-            req.url = res.path = data[2]
+            req.url = req.path = data[2]
             req.headers = data[3]
             req.body = data[4]
             req.params = []
-            
-            if (requestType !== supportedRequestTypes[0]) {
-                res = _.clone(abstractRes)
 
-                res.requestId = RequestId(data[0])
-
-                res.headers = {}
-                res.send = res.end = function send() {
-                    let statusCode = res.statusCode
-                    let body = arguments[0]
-                    if (arguments.length === 2) {
-                        statusCode = arguments[0]
-                        body = arguments[1]
-                    }
-
-                    let data = []
-
-                    data[0] = res.requestId
-                    data[1] = statusCode
-                    data[2] = res.headers
-                    data[3] = body
-
-                    connection.send(JSON.stringify(data))
+            let res = _.clone(abstractRes)
+            res.requestId = RequestId(data[0])
+            res.send = res.end = function send() {
+                let statusCode = res.statusCode
+                let body = arguments[0]
+                if (arguments.length === 2) {
+                    statusCode = arguments[0]
+                    body = arguments[1]
                 }
-                res.setHeader = function(name, value) {
-                    res.headers[name] = value
-                }
-                res.unsetHeader = function(name) {
-                    res.headers[name] = undefined
-                }
+
+                connection.send(JSON.stringify([
+                    res.requestId,
+                    statusCode,
+                    res.headers,
+                    body,
+                ]));
             }
+            res.setHeader = function(name, value) {
+                res.headers[name] = value
+            }
+            res.unsetHeader = function(name) {
+                res.headers[name] = undefined
+            }
+
             if (requestType === supportedRequestTypes[0]) {
                 res.send = res.end = function() {
-                    console.warn('Response sednding not supported for NOTIFY')
+                    console.warn('Response sending not supported for NOTIFY')
                 }
             }
 
             console.info(colors.green(req.method + ':'), req.url)
-            app.handle(req, res)
+
+            if (supportedRequestTypes.indexOf(requestType) === -1) {
+                res.statusCode = 501;
+                res.send();
+            } else {
+                app.handle(req, res);
+            }
         })
     })
 
