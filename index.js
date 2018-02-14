@@ -111,7 +111,12 @@ function startListening(httpServer) {
 
             if (requestType === supportedRequestTypes[0]) {
                 res.send = res.end = function() {
-                    console.warn('Response sending not supported for NOTIFY')
+                    connection.send(JSON.stringify([
+                        res.requestId,
+                        202,
+                        res.headers,
+                        '',
+                    ]));
                 }
             }
 
