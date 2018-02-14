@@ -39,9 +39,10 @@ function startListening(httpServer) {
     let app = router()
 
     app.on = server.on
+    app.emit = server.emit;
 
     server.on('connection', function(connection){
-        // connection.send('hi') // this can be some information for client
+        app.emit('connection', connection);
 
         let abstractReq = {
             server,
