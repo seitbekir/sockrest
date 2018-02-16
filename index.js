@@ -39,9 +39,10 @@ function startListening(httpServer) {
     let app = router()
 
     app.on = server.on
+    app.emit = server.emit;
 
     server.on('connection', function(connection){
-        // connection.send('hi') // this can be some information for client
+        app.emit('connection', connection);
 
         let abstractReq = {
             server,
@@ -110,7 +111,12 @@ function startListening(httpServer) {
 
             if (requestType === supportedRequestTypes[0]) {
                 res.send = res.end = function() {
-                    console.warn('Response sending not supported for NOTIFY')
+                    connection.send(JSON.stringify([
+                        res.requestId,
+                        202,
+                        res.headers,
+                        '',
+                    ]));
                 }
             }
 
