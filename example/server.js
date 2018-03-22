@@ -1,13 +1,25 @@
+const _ = require('lodash')
 const sockrest = require('../index.js')
+const { User } = sockrest
 
 const app = sockrest.listen(3000)
 
-// app.user('connection', connection => {
-//     console.info('User connected')
-// })
-// app.user('disconnect', connection => {
-//     console.info('User disconnected')
-// })
+app.auth(connection => {
+    const user = {
+        name: 'Default Username',
+    }
+    const token = connection.token || _.uniqueId()
+    return new User(connection, token, user)
+})
+app.on('user-connected', connection => {
+    console.info('User connected')
+})
+app.on('user-disconnected', connection => {
+    console.info('User disconnected')
+})
+app.on('user-allowed', connection => {
+    console.info(`User allowed: ${connection.user.id}, ${connection.user.name}`)
+})
 
 app.use((req, res, next) => {
     console.info('first middleware', req.body)
