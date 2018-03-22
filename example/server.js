@@ -1,24 +1,26 @@
-const _ = require('lodash')
 const sockrest = require('../index.js')
-const { User } = sockrest
 
 const app = sockrest.listen(3000)
 
-app.auth(connection => {
+app.on('user-connected', connection => {
+    console.info('User connected')
+
+    const token = connection.token
+    if (!token) {
+        connection.deny()
+    }
     const user = {
         name: 'Default Username',
     }
-    const token = connection.token || _.uniqueId()
-    return new User(connection, token, user)
-})
-app.on('user-connected', connection => {
-    console.info('User connected')
+
+    connection.setUser(token, user)
+    connection.allow()
 })
 app.on('user-disconnected', connection => {
-    console.info('User disconnected')
+    console.info(`User disconnected: ${connection.user.id} has now ${connection.user.connections.length} connections`)
 })
 app.on('user-allowed', connection => {
-    console.info(`User allowed: ${connection.user.id}, ${connection.user.name}`)
+    console.info(`User allowed: ${connection.user.id}, ${connection.user.name} has now ${connection.user.connections.length} connections`)
 })
 
 app.use((req, res, next) => {

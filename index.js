@@ -1,4 +1,3 @@
-/* globals Promise */
 const _ = require('lodash')
 const parseUrl = require('url-parse')
 
@@ -57,43 +56,39 @@ function startListening(httpServer) {
     app.on = server.on
     app.emit = server.emit
 
-    app._doAuth = _doAuth
-    app.auth = _setAuth.bind(app)
-
     app.setAuthTime = setAuthTime
 
     server.on('connection', function(connection){
-        app.emit('user-connected', connection)
-        
+        connection.allow = () => allow()
+        connection.deny = () => deny()
         connection.token = connection.request.token
-        Promise
-            .resolve(app._doAuth(connection))
-            .then(user => attachUser(connection, user))
-            .then(connection => connection.allow())
-            .catch(console.error)
+        connection.setUser = (id, user) => {
+            const _user = new User(connection, id, user)
+            attachUser(connection, _user)
+        }
 
         let timer = null
         if (AUTH_TIME) {
             timer = setTimeout(() => connection.close(), AUTH_TIME)
         }
+        
+        app.emit('user-connected', connection)
 
-        connection.allow = () => connection.emit('allow')
-        connection.deny = () => connection.emit('deny')
-
-        connection.once('allow', () => {
+        function allow() {
             app.emit('user-allowed', connection)
+            fakeAuth(connection)
             connection.on('message', message)
 
             clearTimeout(timer)
 
             connection.allow = connection.deny = () => {}
-        })
-        connection.once('deny', () => {
+        }
+        function deny() {
             app.emit('user-denied', connection)
             connection.close()
 
             connection.allow = connection.deny = () => {}
-        })
+        }
 
         connection.on('close', disconnect)
 
@@ -201,15 +196,11 @@ function RequestId(obj) {
     return _.toString(obj)
 }
 
-function _doAuth(connection) {
-    return User(connection, _.uniqueId(), {})
-}
-function _setAuth(cb) {
-    if (cb.length !== 1) {
-        throw new Error('Callback function has to have access to connection instance to allow or deny connection')
+function fakeAuth(connection) {
+    if (!connection.user) {
+        let user = new User(connection, _.uniqueId(), {})
+        attachUser(connection, user)
     }
-
-    this._doAuth = cb
 }
 
 function setAuthTime(time) {
@@ -220,7 +211,7 @@ function attachUser(connection, user) {
     if (user instanceof User) {
         Object.defineProperties(connection, {
             user: { writable: false, value: user },
-            userId: { writable: false, value: user.id },
+            userId: { get: () => user.id },
         })
         return connection
     } else {
